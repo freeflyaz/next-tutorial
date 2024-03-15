@@ -1,3 +1,4 @@
+import { unstable_noStore as noStore } from 'next/cache';
 import { sql } from '@vercel/postgres';
 import {
   CustomerField,
@@ -10,20 +11,21 @@ import {
 } from './definitions';
 import { formatCurrency } from './utils';
 
-export async function fetchRevenue() {
+export async function fetchRevenue() { 
+  noStore();
   // Add noStore() here to prevent the response from being cached.
   // This is equivalent to in fetch(..., {cache: 'no-store'}).
 
   try {
-    // Artificially delay a response for demo purposes.
-    // Don't do this in production :)
+   // Artificially delay a response for demo purposes.
+   // Don't do this in production :)
 
-    // console.log('Fetching revenue data...');
-    // await new Promise((resolve) => setTimeout(resolve, 3000));
+    console.log('Fetching revenue data...');
+    await new Promise((resolve) => setTimeout(resolve, 3000));
 
     const data = await sql<Revenue>`SELECT * FROM revenue`;
 
-    // console.log('Data fetch completed after 3 seconds.');
+    console.log('Data fetch completed after 3 seconds.');
 
     return data.rows;
   } catch (error) {
@@ -33,6 +35,7 @@ export async function fetchRevenue() {
 }
 
 export async function fetchLatestInvoices() {
+  noStore();
   try {
     const data = await sql<LatestInvoiceRaw>`
       SELECT invoices.amount, customers.name, customers.image_url, customers.email, invoices.id
@@ -53,6 +56,7 @@ export async function fetchLatestInvoices() {
 }
 
 export async function fetchCardData() {
+  // noStore();
   try {
     // You can probably combine these into a single SQL query
     // However, we are intentionally splitting them to demonstrate
@@ -70,7 +74,7 @@ export async function fetchCardData() {
       invoiceStatusPromise,
     ]);
 
-    const numberOfInvoices = Number(data[0].rows[0].count ?? '0');
+    const numberOfInvoices: string = Number(data[0].rows[0].count ?? '0').toString();
     const numberOfCustomers = Number(data[1].rows[0].count ?? '0');
     const totalPaidInvoices = formatCurrency(data[2].rows[0].paid ?? '0');
     const totalPendingInvoices = formatCurrency(data[2].rows[0].pending ?? '0');
@@ -93,7 +97,7 @@ export async function fetchFilteredInvoices(
   currentPage: number,
 ) {
   const offset = (currentPage - 1) * ITEMS_PER_PAGE;
-
+  noStore();
   try {
     const invoices = await sql<InvoicesTable>`
       SELECT
@@ -124,6 +128,7 @@ export async function fetchFilteredInvoices(
 }
 
 export async function fetchInvoicesPages(query: string) {
+  noStore();
   try {
     const count = await sql`SELECT COUNT(*)
     FROM invoices
